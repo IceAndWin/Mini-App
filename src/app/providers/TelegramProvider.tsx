@@ -41,6 +41,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
     if (!webApp) return
 
     webApp.ready()
+    webApp.expand()
 
     initWebApp(webApp)
     applyTheme(webApp.colorScheme, webApp.themeParams)

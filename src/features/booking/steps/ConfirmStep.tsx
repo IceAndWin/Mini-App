@@ -100,44 +100,8 @@ export function ConfirmStep() {
   return (
     <div>
       <h2 className="mb-4 text-lg font-semibold">Подтверждение</h2>
-      <div className="space-y-3">
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-text-secondary">Услуга</p>
-          <p className="mt-0.5 font-medium">{service?.name}</p>
-          <p className="text-xs text-text-secondary">
-            {service?.duration} мин · {service ? formatPrice(service.price) : ''}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-text-secondary">Мастер</p>
-          <p className="mt-0.5 font-medium">{master?.name}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-text-secondary">Дата и время</p>
-          <p className="mt-0.5 font-medium">
-            {date ? formatDate(date) : ''} в {time}
-          </p>
-        </div>
-      </div>
 
-      {discountPercent > 0 && (
-        <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-text-secondary">Цена</span>
-            <span>{formatPrice(fullPrice)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-green-600">
-            <span>Скидка {discountPercent}%</span>
-            <span>-{formatPrice(discountAmount)}</span>
-          </div>
-          <div className="mt-1 flex justify-between font-semibold">
-            <span>Итого</span>
-            <span>{formatPrice(finalPrice)}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="mt-4">
+      <div className="mb-4">
         <label className="text-xs text-text-secondary">Промокод</label>
         <div className="mt-1 flex gap-2">
           <input
@@ -158,6 +122,43 @@ export function ConfirmStep() {
           </button>
         </div>
         {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
+      </div>
+
+      {discountPercent > 0 && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Цена</span>
+            <span>{formatPrice(fullPrice)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Скидка {discountPercent}%</span>
+            <span>-{formatPrice(discountAmount)}</span>
+          </div>
+          <div className="mt-1 flex justify-between font-semibold">
+            <span>Итого</span>
+            <span>{formatPrice(finalPrice)}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-xs text-text-secondary">Услуга</p>
+          <p className="mt-0.5 font-medium">{service?.name}</p>
+          <p className="text-xs text-text-secondary">
+            {service?.duration} мин · {service ? formatPrice(service.price) : ''}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-xs text-text-secondary">Мастер</p>
+          <p className="mt-0.5 font-medium">{master?.name}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-xs text-text-secondary">Дата и время</p>
+          <p className="mt-0.5 font-medium">
+            {date ? formatDate(date) : ''} в {time}
+          </p>
+        </div>
       </div>
 
       {isSubmitting && (
