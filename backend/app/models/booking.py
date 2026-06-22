@@ -2,7 +2,7 @@ from datetime import date, time
 
 from datetime import date, time
 
-from sqlalchemy import Boolean, Date, ForeignKey, String, Time
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Time
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,6 +25,8 @@ class Booking(UUIDMixin, TimestampMixin, Base):
     time: Mapped[time] = mapped_column(Time, nullable=False)
     client_name: Mapped[str] = mapped_column(String(256), nullable=False)
     client_phone: Mapped[str] = mapped_column(String(32), nullable=False)
+    promo_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    discount_amount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[str] = mapped_column(
         String(32),
         default="pending",

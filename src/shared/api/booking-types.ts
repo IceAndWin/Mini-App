@@ -16,6 +16,7 @@ export interface ApiBookingCreate {
   time: string
   client_name: string
   client_phone: string
+  promo_code?: string
   user_id?: string
 }
 
@@ -27,6 +28,8 @@ export interface ApiBooking {
   time: string
   client_name: string
   client_phone: string
+  promo_code?: string
+  discount_amount: number
   status: string
   created_at: string
 }

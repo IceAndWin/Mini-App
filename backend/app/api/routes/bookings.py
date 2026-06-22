@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.booking import Booking
 from app.models.master import Master
 from app.models.master_schedule import MasterSchedule
+from app.models.promo_code import PromoCode
 from app.models.service import Service
 from app.models.user import User
 from app.schemas.booking import (
@@ -156,6 +157,21 @@ async def create_booking(
                 detail="This time slot is already booked",
             )
 
+    if body.promo_code:
+        result = await db.execute(
+            select(PromoCode).where(PromoCode.code == body.promo_code.upper().strip())
+        )
+        promo = result.scalar_one_or_none()
+        if not promo or not promo.is_active or promo.used_count >= promo.max_uses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Промокод недействителен",
+            )
+        discount = service.price * promo.discount_percent // 100
+        promo.used_count += 1
+    else:
+        discount = 0
+
     booking = Booking(
         master_id=body.master_id,
         service_id=body.service_id,
@@ -163,6 +179,8 @@ async def create_booking(
         time=body.time,
         client_name=body.client_name,
         client_phone=body.client_phone,
+        promo_code=body.promo_code,
+        discount_amount=discount,
         user_id=current_user.id if current_user else None,
         status="pending",
     )
@@ -197,6 +215,8 @@ async def get_my_bookings(
             service_id=str(b.service_id),
             date=b.date,
             time=b.time,
+            promo_code=b.promo_code,
+            discount_amount=b.discount_amount,
             client_name=b.client_name,
             client_phone=b.client_phone,
             status=b.status,
@@ -285,6 +305,8 @@ async def reschedule_booking(
         client_name=booking.client_name,
         client_phone=booking.client_phone,
         status=booking.status,
+        promo_code=booking.promo_code,
+        discount_amount=booking.discount_amount,
         user_id=str(booking.user_id) if booking.user_id else None,
         created_at=booking.created_at,
         master=MasterListItem(

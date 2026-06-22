@@ -8,10 +8,12 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_admin_user
-from app.database import get_db
+from app.api.deps import get_admin_user, get_current_user
+from app.database import engine, get_db
+from app.models.base import Base
 from app.models.booking import Booking
 from app.models.master import Master
+from app.models.promo_code import PromoCode
 from app.models.review import Review
 from app.models.service import Service
 from app.models.user import User
@@ -290,7 +292,7 @@ async def list_all_bookings(
         BookingDetailResponse(
             id=str(b.id), master_id=str(b.master_id), service_id=str(b.service_id),
             date=b.date, time=b.time, client_name=b.client_name, client_phone=b.client_phone,
-            status=b.status, user_id=str(b.user_id) if b.user_id else None,
+            status=b.status, promo_code=b.promo_code, discount_amount=b.discount_amount, user_id=str(b.user_id) if b.user_id else None,
             created_at=b.created_at,
             master=MasterListItem(
                 id=str(b.master.id), name=b.master.name, bio=b.master.bio,
@@ -421,3 +423,113 @@ async def stats_total(
         "total_services": total_services,
         "total_users": total_users,
     }
+
+
+# ── Promo Codes ─────────────────────────────────────────────
+
+
+class PromoCodeCreateRequest(BaseModel):
+    code: str
+    discount_percent: int = 10
+    max_uses: int = 100
+
+
+class PromoCodeAdminResponse(BaseModel):
+    id: str
+    code: str
+    discount_percent: int
+    max_uses: int
+    used_count: int
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/promocodes", response_model=list[PromoCodeAdminResponse])
+async def list_promo_codes(
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_admin_user),
+):
+    result = await db.execute(select(PromoCode).order_by(PromoCode.code))
+    return [
+        PromoCodeAdminResponse(
+            id=str(p.id), code=p.code, discount_percent=p.discount_percent,
+            max_uses=p.max_uses, used_count=p.used_count, is_active=p.is_active,
+        )
+        for p in result.scalars().all()
+    ]
+
+
+@router.post("/promocodes", response_model=PromoCodeAdminResponse, status_code=status.HTTP_201_CREATED)
+async def create_promo_code(
+    body: PromoCodeCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_admin_user),
+):
+    existing = await db.execute(select(PromoCode).where(PromoCode.code == body.code.upper().strip()))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Промокод уже существует")
+
+    promo = PromoCode(
+        code=body.code.upper().strip(),
+        discount_percent=body.discount_percent,
+        max_uses=body.max_uses,
+    )
+    db.add(promo)
+    await db.commit()
+    await db.refresh(promo)
+    return PromoCodeAdminResponse(
+        id=str(promo.id), code=promo.code, discount_percent=promo.discount_percent,
+        max_uses=promo.max_uses, used_count=promo.used_count, is_active=promo.is_active,
+    )
+
+
+@router.post("/migrate")
+async def run_migration(
+    _admin=Depends(get_admin_user),
+):
+    from app.models import Booking, Master, MasterSchedule, PromoCode, Review, Service, User, master_services
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    return {"ok": True, "tables": list(Base.metadata.tables.keys())}
+
+
+@router.delete("/promocodes/{promo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_promo_code(
+    promo_id: str,
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_admin_user),
+):
+    promo = await db.get(PromoCode, promo_id)
+    if not promo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promo code not found")
+    await db.delete(promo)
+    await db.commit()
+
+
+# ── Seed Data ────────────────────────────────────────────────
+
+
+class SeedPromoCodesResponse(BaseModel):
+    created: list[str]
+
+
+@router.post("/seed/promocodes", response_model=SeedPromoCodesResponse)
+async def seed_promocodes(
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_admin_user),
+):
+    codes = [
+        {"code": "GOD_ISKO", "discount_percent": 10, "max_uses": 100},
+        {"code": "ADILET_LOH", "discount_percent": 10, "max_uses": 100},
+    ]
+    created = []
+    for c in codes:
+        existing = await db.execute(select(PromoCode).where(PromoCode.code == c["code"]))
+        if existing.scalar_one_or_none():
+            continue
+        promo = PromoCode(**c)
+        db.add(promo)
+        created.append(c["code"])
+    await db.commit()
+    return SeedPromoCodesResponse(created=created)

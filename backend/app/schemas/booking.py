@@ -14,6 +14,7 @@ class BookingCreate(BaseModel):
     time: time
     client_name: str
     client_phone: str
+    promo_code: str | None = None
     user_id: str | None = None
 
 
@@ -25,6 +26,8 @@ class BookingResponse(BaseModel):
     time: time
     client_name: str
     client_phone: str
+    promo_code: str | None = None
+    discount_amount: int = 0
     status: str
     user_id: UUID | None = None
 
@@ -39,6 +42,8 @@ class BookingDetailResponse(BaseModel):
     time: time
     client_name: str
     client_phone: str
+    promo_code: str | None = None
+    discount_amount: int = 0
     status: str
     user_id: UUID | None = None
     created_at: datetime

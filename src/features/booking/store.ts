@@ -11,6 +11,8 @@ interface BookingState {
   selectedTime: string | null
   clientName: string
   clientPhone: string
+  promoCode: string
+  discountPercent: number
   isSubmitting: boolean
   isSuccess: boolean
 
@@ -20,6 +22,8 @@ interface BookingState {
   setTime: (time: string | null) => void
   setClientName: (name: string) => void
   setClientPhone: (phone: string) => void
+  setPromoCode: (code: string) => void
+  setDiscountPercent: (pct: number) => void
   nextStep: () => void
   prevStep: () => void
   goToStep: (step: BookingStep) => void
@@ -36,6 +40,8 @@ const initialState = {
   selectedTime: null,
   clientName: '',
   clientPhone: '',
+  promoCode: '',
+  discountPercent: 0,
   isSubmitting: false,
   isSuccess: false,
 }
@@ -49,6 +55,8 @@ export const useBookingStore = create<BookingState>()((set) => ({
   setTime: (time) => { set({ selectedTime: time }) },
   setClientName: (clientName) => { set({ clientName }) },
   setClientPhone: (clientPhone) => { set({ clientPhone }) },
+  setPromoCode: (promoCode) => { set({ promoCode }) },
+  setDiscountPercent: (discountPercent) => { set({ discountPercent }) },
 
   nextStep: () => {
     set((state) => ({ currentStep: Math.min(4, state.currentStep + 1) as BookingStep }))

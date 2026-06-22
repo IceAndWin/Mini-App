@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useBookingStore } from '@/features/booking/store'
 import { useTelegram } from '@/shared/hooks/useTelegram'
 import { formatPrice } from '@/shared/lib/format'
-import { createBooking } from '@/shared/api/endpoints'
+import { createBooking, validatePromoCode } from '@/shared/api/endpoints'
 import { Button } from '@/shared/ui/Button'
 
 export function ConfirmStep() {
@@ -10,13 +10,39 @@ export function ConfirmStep() {
   const master = useBookingStore((s) => s.selectedMaster)
   const date = useBookingStore((s) => s.selectedDate)
   const time = useBookingStore((s) => s.selectedTime)
+  const promoCode = useBookingStore((s) => s.promoCode)
+  const discountPercent = useBookingStore((s) => s.discountPercent)
   const isSubmitting = useBookingStore((s) => s.isSubmitting)
   const isSuccess = useBookingStore((s) => s.isSuccess)
   const setSubmitting = useBookingStore((s) => s.setSubmitting)
   const setSuccess = useBookingStore((s) => s.setSuccess)
+  const setPromoCode = useBookingStore((s) => s.setPromoCode)
+  const setDiscountPercent = useBookingStore((s) => s.setDiscountPercent)
   const reset = useBookingStore((s) => s.reset)
   const { showMainButton, hideMainButton, user } = useTelegram()
   const [error, setError] = useState('')
+  const [promoMsg, setPromoMsg] = useState('')
+  const [inputCode, setInputCode] = useState(promoCode)
+
+  const handleApplyPromo = useCallback(async () => {
+    const code = inputCode.trim()
+    if (!code) return
+    try {
+      const res = await validatePromoCode(code)
+      if (res.valid) {
+        setPromoCode(code)
+        setDiscountPercent(res.discount_percent)
+        setPromoMsg(res.message)
+        setError('')
+      } else {
+        setPromoMsg('')
+        setDiscountPercent(0)
+        setError(res.message)
+      }
+    } catch {
+      setError('Ошибка проверки промокода')
+    }
+  }, [inputCode, setPromoCode, setDiscountPercent])
 
   useEffect(() => {
     const handleConfirm = async () => {
@@ -31,6 +57,7 @@ export function ConfirmStep() {
           time,
           client_name: user?.first_name ?? 'Клиент',
           client_phone: '',
+          promo_code: promoCode || undefined,
         })
         setSuccess(true)
       } catch (e: unknown) {
@@ -43,12 +70,18 @@ export function ConfirmStep() {
 
     showMainButton('Подтвердить запись', () => { void handleConfirm() })
     return () => { hideMainButton() }
-  }, [service, master, date, time, showMainButton, hideMainButton, setSubmitting, setSuccess, user])
+  }, [service, master, date, time, promoCode, showMainButton, hideMainButton, setSubmitting, setSuccess, user])
+
+  useEffect(() => {
+    setInputCode(promoCode)
+  }, [promoCode])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
   }
+
+  const fullPrice = service?.price ?? 0
 
   if (isSuccess) {
     return (
@@ -83,6 +116,42 @@ export function ConfirmStep() {
           </p>
         </div>
       </div>
+
+      {discountPercent > 0 && (
+        <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Цена</span>
+            <span>{formatPrice(fullPrice)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Скидка {discountPercent}%</span>
+            <span>-{formatPrice(fullPrice * discountPercent / 100)}</span>
+          </div>
+          <div className="mt-1 flex justify-between font-semibold">
+            <span>Итого</span>
+            <span>{formatPrice(fullPrice - fullPrice * discountPercent / 100)}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <label className="text-xs text-text-secondary">Промокод</label>
+        <div className="mt-1 flex gap-2">
+          <input
+            type="text"
+            value={inputCode}
+            onChange={(e) => { setInputCode(e.target.value); setPromoMsg(''); setError('') }}
+            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+            placeholder="Введите промокод"
+            disabled={isSubmitting}
+          />
+          <Button variant="secondary" onClick={handleApplyPromo} disabled={isSubmitting || !inputCode.trim()}>
+            Применить
+          </Button>
+        </div>
+        {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
+      </div>
+
       {isSubmitting && (
         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-text-secondary">
           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">

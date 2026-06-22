@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import admin, auth, services, masters, bookings, users
+from app.api.routes import admin, auth, bookings, masters, promo_codes, services, users
 from app.config import settings
 
 
@@ -38,6 +38,7 @@ app.include_router(services.router)
 app.include_router(masters.router)
 app.include_router(bookings.router)
 app.include_router(users.router)
+app.include_router(promo_codes.router)
 app.include_router(admin.router)
 
 

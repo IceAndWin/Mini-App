@@ -10,6 +10,13 @@ import type {
 } from './types'
 import type { ApiAvailableSlotsResponse, ApiBookingCreate, ApiBooking } from './booking-types'
 
+export interface ApiPromoCodeValidate {
+  code: string
+  discount_percent: number
+  valid: boolean
+  message: string
+}
+
 export async function fetchServices(params?: { category?: string; search?: string }): Promise<ApiService[]> {
   const { data } = await apiClient.get<ApiService[]>('/api/services', { params })
   return data
@@ -51,6 +58,11 @@ export async function fetchAvailableSlots(
 export async function createBooking(body: ApiBookingCreate): Promise<ApiBooking> {
   const response: { data: ApiBooking } = await apiClient.post('/api/bookings', body)
   return response.data
+}
+
+export async function validatePromoCode(code: string): Promise<ApiPromoCodeValidate> {
+  const { data } = await apiClient.post<ApiPromoCodeValidate>('/api/promocodes/validate', { code })
+  return data
 }
 
 export async function fetchMyBookings(): Promise<ApiBookingFull[]> {
