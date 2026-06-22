@@ -13,10 +13,29 @@ from app.database import engine
 from app.models.base import Base
 
 
+async def _seed_promocodes():
+    from app.database import async_session
+    from app.models.promo_code import PromoCode
+
+    codes = [
+        {"code": "GOD_ISKO", "discount_percent": 10, "max_uses": 100},
+        {"code": "ADILET_LOH", "discount_percent": 10, "max_uses": 100},
+    ]
+    async with async_session() as db:
+        for c in codes:
+            from sqlalchemy import select
+            existing = await db.execute(select(PromoCode).where(PromoCode.code == c["code"]))
+            if existing.scalar_one_or_none():
+                continue
+            db.add(PromoCode(**c))
+        await db.commit()
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await _seed_promocodes()
     yield
 
 
