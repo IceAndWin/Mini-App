@@ -9,10 +9,14 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import admin, auth, bookings, masters, promo_codes, services, users
 from app.config import settings
+from app.database import engine
+from app.models.base import Base
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
 
 

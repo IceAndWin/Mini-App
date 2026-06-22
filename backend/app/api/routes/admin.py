@@ -8,9 +8,8 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_admin_user, get_current_user
-from app.database import engine, get_db
-from app.models.base import Base
+from app.api.deps import get_admin_user
+from app.database import get_db
 from app.models.booking import Booking
 from app.models.master import Master
 from app.models.promo_code import PromoCode
@@ -482,16 +481,6 @@ async def create_promo_code(
         id=str(promo.id), code=promo.code, discount_percent=promo.discount_percent,
         max_uses=promo.max_uses, used_count=promo.used_count, is_active=promo.is_active,
     )
-
-
-@router.post("/migrate")
-async def run_migration(
-    _admin=Depends(get_admin_user),
-):
-    from app.models import Booking, Master, MasterSchedule, PromoCode, Review, Service, User, master_services
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    return {"ok": True, "tables": list(Base.metadata.tables.keys())}
 
 
 @router.delete("/promocodes/{promo_id}", status_code=status.HTTP_204_NO_CONTENT)
