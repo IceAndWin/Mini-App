@@ -23,59 +23,53 @@ export function ConfirmStep() {
   const [error, setError] = useState('')
   const [promoMsg, setPromoMsg] = useState('')
   const [inputCode, setInputCode] = useState(promoCode)
-  const [promoLoading, setPromoLoading] = useState(false)
-
-  const handleApplyPromo = () => {
-    const code = inputCode.trim()
-    if (!code || promoLoading) return
-    setPromoLoading(true)
-    setError('')
-    setPromoMsg('')
-    validatePromoCode(code)
-      .then((res) => {
-        if (res.valid) {
-          setPromoCode(code)
-          setDiscountPercent(res.discount_percent)
-          setPromoMsg(res.message)
-        } else {
-          setDiscountPercent(0)
-          setError(res.message)
-        }
-      })
-      .catch((err) => {
-        console.error('Promo error:', err)
-        setError('Ошибка проверки промокода')
-      })
-      .finally(() => {
-        setPromoLoading(false)
-      })
-  }
 
   useEffect(() => {
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
       if (!service || !master || !date || !time) return
       setError('')
       setSubmitting(true)
-      createBooking({
-        master_id: master.id,
-        service_id: service.id,
-        date,
-        time,
-        client_name: user?.first_name ?? 'Клиент',
-        client_phone: '',
-        promo_code: promoCode || undefined,
-      })
-        .then(() => setSuccess(true))
-        .catch((e: unknown) => {
-          const msg = e instanceof Error ? e.message : 'Ошибка при создании записи'
-          setError(msg)
+
+      let finalPromoCode = promoCode
+      let finalDiscountPercent = discountPercent
+
+      const code = inputCode.trim()
+      if (code && !promoCode) {
+        try {
+          const res = await validatePromoCode(code)
+          if (res.valid) {
+            finalPromoCode = code
+            finalDiscountPercent = res.discount_percent
+            setPromoCode(code)
+            setDiscountPercent(res.discount_percent)
+          }
+        } catch {
+          // ignore promo error on confirm
+        }
+      }
+
+      try {
+        await createBooking({
+          master_id: master.id,
+          service_id: service.id,
+          date,
+          time,
+          client_name: user?.first_name ?? 'Клиент',
+          client_phone: '',
+          promo_code: finalPromoCode || undefined,
         })
-        .finally(() => setSubmitting(false))
+        setSuccess(true)
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Ошибка при создании записи'
+        setError(msg)
+      } finally {
+        setSubmitting(false)
+      }
     }
 
     showMainButton('Подтвердить запись', handleConfirm)
     return () => { hideMainButton() }
-  }, [service, master, date, time, promoCode, showMainButton, hideMainButton, setSubmitting, setSuccess, user])
+  }, [service, master, date, time, promoCode, discountPercent, inputCode, showMainButton, hideMainButton, setSubmitting, setSuccess, setPromoCode, setDiscountPercent, user])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
@@ -101,29 +95,6 @@ export function ConfirmStep() {
     <div>
       <h2 className="mb-4 text-lg font-semibold">Подтверждение</h2>
 
-      <div className="mb-4">
-        <label className="text-xs text-text-secondary">Промокод</label>
-        <div className="mt-1 flex gap-2">
-          <input
-            type="text"
-            value={inputCode}
-            onChange={(e) => { setInputCode(e.target.value); setPromoMsg(''); setError('') }}
-            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
-            placeholder="Введите промокод"
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            onClick={handleApplyPromo}
-            disabled={isSubmitting || promoLoading || !inputCode.trim()}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {promoLoading ? '...' : 'Применить'}
-          </button>
-        </div>
-        {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
-      </div>
-
       {discountPercent > 0 && (
         <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3">
           <div className="flex justify-between text-sm">
@@ -140,6 +111,19 @@ export function ConfirmStep() {
           </div>
         </div>
       )}
+
+      <div className="mb-4">
+        <label className="text-xs text-text-secondary">Промокод</label>
+        <input
+          type="text"
+          value={inputCode}
+          onChange={(e) => { setInputCode(e.target.value); setPromoMsg(''); setError('') }}
+          className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+          placeholder="Введите промокод и нажмите «Подтвердить запись»"
+          disabled={isSubmitting}
+        />
+        {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
+      </div>
 
       <div className="space-y-3">
         <div className="rounded-xl border border-border bg-surface p-4">
