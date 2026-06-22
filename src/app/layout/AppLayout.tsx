@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { BottomNav } from '@/widgets/BottomNav/BottomNav'
 
 export function AppLayout() {
   return (
@@ -6,7 +7,7 @@ export function AppLayout() {
       <main className="mx-auto max-w-lg px-4 pb-20 pt-4">
         <Outlet />
       </main>
-      {/* Bottom navigation will be added later */}
+      <BottomNav />
     </div>
   )
 }

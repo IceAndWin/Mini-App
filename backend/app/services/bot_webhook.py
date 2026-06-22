@@ -38,7 +38,7 @@ async def handle_update(update: dict, base_url: str = "") -> None:
             "👋 Добро пожаловать!\nНажмите кнопку ниже, чтобы открыть приложение.",
             reply_markup={
                 "inline_keyboard": [[
-                    {"text": "🚀 Открыть Mini App", "web_app": {"url": f"{base_url}/app/"}}
+                    {"text": "🚀 Открыть Mini App", "web_app": {"url": base_url}}
                 ]]
             },
         )
