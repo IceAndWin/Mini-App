@@ -1,0 +1,10 @@
+node_modules/
+dist/
+admin/dist/
+.env
+*.pyc
+__pycache__/
+uploads/
+backend/uploads/
+.DS_Store
+*.log
