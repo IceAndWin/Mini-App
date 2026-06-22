@@ -62,6 +62,30 @@ async def admin_login(
     session_token = create_access_token(str(user.id), user.telegram_id)
     return AdminLoginResponse(token=session_token, user_id=str(user.id))
 
+
+@router.post("/auth/session-login", response_model=AdminLoginResponse)
+async def admin_session_login(
+    body: AdminLoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        payload = decode_access_token(body.token)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not an admin")
+
+    session_token = create_access_token(str(user.id), user.telegram_id)
+    return AdminLoginResponse(token=session_token, user_id=str(user.id))
+
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "uploads")
 try:
     os.makedirs(UPLOAD_DIR, exist_ok=True)

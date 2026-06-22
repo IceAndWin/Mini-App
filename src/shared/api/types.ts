@@ -62,6 +62,7 @@ export interface ApiUser {
   phone: string | null
   bonus_points: number
   promo_code: string | null
+  is_admin: boolean
 }
 
 export interface ApiBookingFull {

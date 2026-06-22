@@ -11,20 +11,28 @@ export default function LoginPage() {
   useEffect(() => {
     const token = searchParams.get('token')
     if (!token) {
-      setErrorMsg('Нет токена авторизации. Используйте команду /admin в боте.')
+      setErrorMsg('Нет токена авторизации.')
       setStatus('error')
       return
     }
 
-    apiClient.post('/api/admin/auth/login', { token })
+    apiClient.post('/api/admin/auth/session-login', { token })
       .then((res) => {
         sessionStorage.setItem('admin_token', res.data.token)
         setStatus('done')
         navigate('/dashboard', { replace: true })
       })
-      .catch((err) => {
-        setErrorMsg(err.response?.data?.detail ?? 'Ошибка авторизации')
-        setStatus('error')
+      .catch(() => {
+        apiClient.post('/api/admin/auth/login', { token })
+          .then((res) => {
+            sessionStorage.setItem('admin_token', res.data.token)
+            setStatus('done')
+            navigate('/dashboard', { replace: true })
+          })
+          .catch((err) => {
+            setErrorMsg(err.response?.data?.detail ?? 'Ошибка авторизации')
+            setStatus('error')
+          })
       })
   }, [searchParams, navigate])
 
@@ -43,7 +51,7 @@ export default function LoginPage() {
             <h2 className="mb-2 text-lg font-semibold">Ошибка входа</h2>
             <p className="mb-6 text-sm text-text-secondary">{errorMsg}</p>
             <p className="text-xs text-text-secondary">
-              Откройте бот и используйте команду <code className="rounded bg-gray-100 px-1.5 py-0.5">/admin</code>
+              Войдите в приложение через Telegram и откройте профиль.
             </p>
           </>
         )}

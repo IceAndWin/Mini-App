@@ -15,6 +15,7 @@ class UserResponse(UserCreate):
     id: UUID
     bonus_points: int = 0
     promo_code: str | None = None
+    is_admin: bool = False
 
     model_config = {"from_attributes": True}
 

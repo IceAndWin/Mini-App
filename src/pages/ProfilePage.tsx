@@ -6,6 +6,7 @@ import { EmptyState } from '@/shared/ui/EmptyState'
 import { useTelegram } from '@/shared/hooks/useTelegram'
 import { useMyBookings, useMe, useCancelBooking, useRescheduleBooking } from '@/features/bookings/hooks'
 import { formatPrice } from '@/shared/lib/format'
+import { getToken } from '@/shared/lib/token'
 import type { ApiBookingFull } from '@/shared/api/types'
 
 type Tab = 'active' | 'history'
@@ -204,6 +205,24 @@ export default function ProfilePage() {
           />
         </div>
       </div>
+
+      {/* Admin button */}
+      {userData?.is_admin && (
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              const token = getToken()
+              if (token) {
+                window.open(`/admin?token=${token}`, '_blank')
+              }
+            }}
+          >
+            Панель администратора
+          </Button>
+        </div>
+      )}
 
       {/* Bookings tabs */}
       <div className="mb-4 flex gap-1 rounded-xl bg-surface p-1">
