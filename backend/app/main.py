@@ -87,7 +87,7 @@ def _serve_spa(dist_dir: Path):
     return JSONResponse({"error": "not found"}, status_code=404)
 
 main_dist = Path(__file__).parent.parent.parent / "dist"
-admin_dist = Path(__file__).parent.parent.parent / "admin" / "dist"
+admin_dist = Path(__file__).parent.parent.parent / "dist" / "admin"
 
 if main_dist.exists():
     app.mount("/app/assets", StaticFiles(directory=str(main_dist / "assets")), name="main_assets")
