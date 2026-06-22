@@ -42,7 +42,8 @@ export function ConfirmStep() {
           setError(res.message)
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Promo error:', err)
         setError('Ошибка проверки промокода')
       })
       .finally(() => {
@@ -147,13 +148,14 @@ export function ConfirmStep() {
             placeholder="Введите промокод"
             disabled={isSubmitting}
           />
-          <Button
-            variant="secondary"
+          <button
+            type="button"
             onClick={handleApplyPromo}
             disabled={isSubmitting || promoLoading || !inputCode.trim()}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {promoLoading ? '...' : 'Применить'}
-          </Button>
+          </button>
         </div>
         {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
       </div>
