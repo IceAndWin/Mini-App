@@ -5,12 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_optional
 from app.database import get_db
 from app.models.booking import Booking
 from app.models.master import Master
 from app.models.master_schedule import MasterSchedule
 from app.models.service import Service
+from app.models.user import User
 from app.schemas.booking import (
     AvailableSlot,
     AvailableSlotsResponse,
@@ -97,6 +98,7 @@ async def create_booking(
     body: BookingCreate,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     master = await db.get(Master, body.master_id)
     if not master:
@@ -161,7 +163,7 @@ async def create_booking(
         time=body.time,
         client_name=body.client_name,
         client_phone=body.client_phone,
-        user_id=body.user_id,
+        user_id=current_user.id if current_user else None,
         status="pending",
     )
     db.add(booking)

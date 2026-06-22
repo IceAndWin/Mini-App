@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useBookingStore } from '@/features/booking/store'
 import { useTelegram } from '@/shared/hooks/useTelegram'
 import { formatPrice } from '@/shared/lib/format'
@@ -16,10 +16,12 @@ export function ConfirmStep() {
   const setSuccess = useBookingStore((s) => s.setSuccess)
   const reset = useBookingStore((s) => s.reset)
   const { showMainButton, hideMainButton, user } = useTelegram()
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const handleConfirm = async () => {
       if (!service || !master || !date || !time) return
+      setError('')
       setSubmitting(true)
       try {
         await createBooking({
@@ -29,11 +31,11 @@ export function ConfirmStep() {
           time,
           client_name: user?.first_name ?? 'Клиент',
           client_phone: '',
-          user_id: user?.id.toString(),
         })
         setSuccess(true)
-      } catch {
-        // submission error
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Ошибка при создании записи'
+        setError(msg)
       } finally {
         setSubmitting(false)
       }
@@ -88,6 +90,11 @@ export function ConfirmStep() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           Оформляем запись...
+        </div>
+      )}
+      {error && (
+        <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-600">
+          {error}
         </div>
       )}
     </div>
