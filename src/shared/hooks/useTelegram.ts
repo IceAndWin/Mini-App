@@ -1,6 +1,19 @@
 import { useCallback } from 'react'
 import { useTelegramStore } from '@/entities/telegram/store'
 
+let mainClickHandler: (() => void) | null = null
+let mainButtonInitialized = false
+
+function initMainButton() {
+  if (mainButtonInitialized) return
+  mainButtonInitialized = true
+  const webApp = window.Telegram?.WebApp
+  if (!webApp?.MainButton) return
+  webApp.MainButton.onClick(() => {
+    mainClickHandler?.()
+  })
+}
+
 export function useTelegram() {
   const webApp = window.Telegram?.WebApp ?? null
   const user = useTelegramStore((s) => s.user)
@@ -8,11 +21,15 @@ export function useTelegram() {
   const isReady = useTelegramStore((s) => s.isReady)
   const themeParams = useTelegramStore((s) => s.themeParams)
 
+  if (webApp?.MainButton && !mainButtonInitialized) {
+    initMainButton()
+  }
+
   const showMainButton = useCallback(
     (text: string, callback: () => void) => {
       if (!webApp?.MainButton) return
+      mainClickHandler = callback
       webApp.MainButton.setText(text)
-      webApp.MainButton.onClick(callback)
       webApp.MainButton.show()
     },
     [webApp],
@@ -20,6 +37,7 @@ export function useTelegram() {
 
   const hideMainButton = useCallback(() => {
     if (!webApp?.MainButton) return
+    mainClickHandler = null
     webApp.MainButton.hide()
   }, [webApp])
 

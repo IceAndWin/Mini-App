@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useBookingStore } from '@/features/booking/store'
 import { useTelegram } from '@/shared/hooks/useTelegram'
 import { formatPrice } from '@/shared/lib/format'
@@ -23,58 +23,58 @@ export function ConfirmStep() {
   const [error, setError] = useState('')
   const [promoMsg, setPromoMsg] = useState('')
   const [inputCode, setInputCode] = useState(promoCode)
+  const [promoLoading, setPromoLoading] = useState(false)
 
-  const handleApplyPromo = useCallback(async () => {
+  const handleApplyPromo = () => {
     const code = inputCode.trim()
-    if (!code) return
-    try {
-      const res = await validatePromoCode(code)
-      if (res.valid) {
-        setPromoCode(code)
-        setDiscountPercent(res.discount_percent)
-        setPromoMsg(res.message)
-        setError('')
-      } else {
-        setPromoMsg('')
-        setDiscountPercent(0)
-        setError(res.message)
-      }
-    } catch {
-      setError('Ошибка проверки промокода')
-    }
-  }, [inputCode, setPromoCode, setDiscountPercent])
+    if (!code || promoLoading) return
+    setPromoLoading(true)
+    setError('')
+    setPromoMsg('')
+    validatePromoCode(code)
+      .then((res) => {
+        if (res.valid) {
+          setPromoCode(code)
+          setDiscountPercent(res.discount_percent)
+          setPromoMsg(res.message)
+        } else {
+          setDiscountPercent(0)
+          setError(res.message)
+        }
+      })
+      .catch(() => {
+        setError('Ошибка проверки промокода')
+      })
+      .finally(() => {
+        setPromoLoading(false)
+      })
+  }
 
   useEffect(() => {
-    const handleConfirm = async () => {
+    const handleConfirm = () => {
       if (!service || !master || !date || !time) return
       setError('')
       setSubmitting(true)
-      try {
-        await createBooking({
-          master_id: master.id,
-          service_id: service.id,
-          date,
-          time,
-          client_name: user?.first_name ?? 'Клиент',
-          client_phone: '',
-          promo_code: promoCode || undefined,
+      createBooking({
+        master_id: master.id,
+        service_id: service.id,
+        date,
+        time,
+        client_name: user?.first_name ?? 'Клиент',
+        client_phone: '',
+        promo_code: promoCode || undefined,
+      })
+        .then(() => setSuccess(true))
+        .catch((e: unknown) => {
+          const msg = e instanceof Error ? e.message : 'Ошибка при создании записи'
+          setError(msg)
         })
-        setSuccess(true)
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'Ошибка при создании записи'
-        setError(msg)
-      } finally {
-        setSubmitting(false)
-      }
+        .finally(() => setSubmitting(false))
     }
 
-    showMainButton('Подтвердить запись', () => { void handleConfirm() })
+    showMainButton('Подтвердить запись', handleConfirm)
     return () => { hideMainButton() }
   }, [service, master, date, time, promoCode, showMainButton, hideMainButton, setSubmitting, setSuccess, user])
-
-  useEffect(() => {
-    setInputCode(promoCode)
-  }, [promoCode])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
@@ -82,6 +82,8 @@ export function ConfirmStep() {
   }
 
   const fullPrice = service?.price ?? 0
+  const discountAmount = fullPrice * discountPercent / 100
+  const finalPrice = fullPrice - discountAmount
 
   if (isSuccess) {
     return (
@@ -125,11 +127,11 @@ export function ConfirmStep() {
           </div>
           <div className="flex justify-between text-sm text-green-600">
             <span>Скидка {discountPercent}%</span>
-            <span>-{formatPrice(fullPrice * discountPercent / 100)}</span>
+            <span>-{formatPrice(discountAmount)}</span>
           </div>
           <div className="mt-1 flex justify-between font-semibold">
             <span>Итого</span>
-            <span>{formatPrice(fullPrice - fullPrice * discountPercent / 100)}</span>
+            <span>{formatPrice(finalPrice)}</span>
           </div>
         </div>
       )}
@@ -145,8 +147,12 @@ export function ConfirmStep() {
             placeholder="Введите промокод"
             disabled={isSubmitting}
           />
-          <Button variant="secondary" onClick={handleApplyPromo} disabled={isSubmitting || !inputCode.trim()}>
-            Применить
+          <Button
+            variant="secondary"
+            onClick={handleApplyPromo}
+            disabled={isSubmitting || promoLoading || !inputCode.trim()}
+          >
+            {promoLoading ? '...' : 'Применить'}
           </Button>
         </div>
         {promoMsg && <p className="mt-1 text-xs text-green-600">{promoMsg}</p>}
