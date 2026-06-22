@@ -8,3 +8,5 @@ uploads/
 backend/uploads/
 .DS_Store
 *.log
+
+.vercel

@@ -27,8 +27,11 @@ app.add_middleware(
 )
 
 uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+try:
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+except OSError:
+    pass
 
 app.include_router(auth.router)
 app.include_router(services.router)

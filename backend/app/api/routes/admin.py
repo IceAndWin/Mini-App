@@ -63,7 +63,11 @@ async def admin_login(
     return AdminLoginResponse(token=session_token, user_id=str(user.id))
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except OSError:
+    UPLOAD_DIR = "/tmp/uploads"
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # ── Services CRUD ──────────────────────────────────────────────
