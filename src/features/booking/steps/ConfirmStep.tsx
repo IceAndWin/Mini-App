@@ -31,7 +31,6 @@ export function ConfirmStep() {
       setSubmitting(true)
 
       let finalPromoCode = promoCode
-      let finalDiscountPercent = discountPercent
 
       const code = inputCode.trim()
       if (code && !promoCode) {
@@ -39,7 +38,6 @@ export function ConfirmStep() {
           const res = await validatePromoCode(code)
           if (res.valid) {
             finalPromoCode = code
-            finalDiscountPercent = res.discount_percent
             setPromoCode(code)
             setDiscountPercent(res.discount_percent)
           }
@@ -69,7 +67,7 @@ export function ConfirmStep() {
 
     showMainButton('Подтвердить запись', handleConfirm)
     return () => { hideMainButton() }
-  }, [service, master, date, time, promoCode, discountPercent, inputCode, showMainButton, hideMainButton, setSubmitting, setSuccess, setPromoCode, setDiscountPercent, user])
+  }, [service, master, date, time, promoCode, inputCode, showMainButton, hideMainButton, setSubmitting, setSuccess, setPromoCode, setDiscountPercent, user])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
