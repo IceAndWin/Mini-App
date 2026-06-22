@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -10,7 +12,7 @@ class ServiceCreate(BaseModel):
 
 
 class ServiceResponse(ServiceCreate):
-    id: str
+    id: UUID
     is_active: bool
 
     model_config = {"from_attributes": True}

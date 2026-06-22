@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -17,29 +18,29 @@ class BookingCreate(BaseModel):
 
 
 class BookingResponse(BaseModel):
-    id: str
-    master_id: str
-    service_id: str
+    id: UUID
+    master_id: UUID
+    service_id: UUID
     date: date
     time: time
     client_name: str
     client_phone: str
     status: str
-    user_id: str | None = None
+    user_id: UUID | None = None
 
     model_config = {"from_attributes": True}
 
 
 class BookingDetailResponse(BaseModel):
-    id: str
-    master_id: str
-    service_id: str
+    id: UUID
+    master_id: UUID
+    service_id: UUID
     date: date
     time: time
     client_name: str
     client_phone: str
     status: str
-    user_id: str | None = None
+    user_id: UUID | None = None
     created_at: datetime
     master: MasterListItem
     service: ServiceResponse

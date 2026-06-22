@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -11,7 +12,7 @@ class ReviewCreate(BaseModel):
 
 
 class ReviewResponse(BaseModel):
-    id: str
+    id: UUID
     rating: int
     text: str | None = None
     client_name: str
@@ -28,7 +29,7 @@ class MasterCreate(BaseModel):
 
 
 class MasterListItem(BaseModel):
-    id: str
+    id: UUID
     name: str
     bio: str | None = None
     avatar_url: str | None = None

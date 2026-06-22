@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -10,7 +12,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(UserCreate):
-    id: str
+    id: UUID
     bonus_points: int = 0
     promo_code: str | None = None
 
